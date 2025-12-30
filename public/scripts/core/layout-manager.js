@@ -135,16 +135,17 @@ const LayoutManager = {
 
         const adminItem = document.createElement('li');
         adminItem.id = 'nav-cost-analysis';
-        adminItem.className = 'nav-item admin-only';
         
+        // ★★★ 套用 Admin 專屬樣式 Class ★★★
+        adminItem.className = 'nav-item admin-restricted';
+        
+        // ★★★ 修正：移除 span，將 class="nav-icon" 直接加在 svg 上，確保吃到 CSS 樣式 ★★★
         adminItem.innerHTML = `
             <a href="#" class="nav-link" onclick="alert('Phase 2 待實作'); return false;">
-                <span class="nav-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="1" x2="12" y2="23"></line>
-                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                    </svg>
-                </span>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
                 <span class="nav-text">商品成本</span>
             </a>
         `;

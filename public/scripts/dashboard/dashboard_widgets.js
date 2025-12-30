@@ -36,8 +36,6 @@ const DashboardWidgets = {
         updateText('si-count', stats.siCount || 0);
         this._updateTrend('si-trend', stats.siCountMonth);
         
-        updateText('followup-count', stats.followUpCount || 0);
-
         // 確保樣式存在
         this._ensureStyles();
     },

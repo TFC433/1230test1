@@ -15,7 +15,6 @@ window.CRM_APP.pageConfig = {
     'weekly-business': { title: '週間業務總覽', subtitle: '檢視所有週次的業務摘要', loaded: false },
     'weekly-detail': { title: '週間業務詳情', subtitle: '檢視特定週次的業務紀錄', loaded: true },
     'events': { title: '事件紀錄列表', subtitle: '查看所有機會案件的詳細事件報告', loaded: false },
-    'follow-up': { title: '待追蹤列表', subtitle: '查看超過7天未聯繫的機會案件', loaded: false },
     'company-details': { title: '公司詳細資料', subtitle: '查看公司的完整關聯資訊', loaded: true },
     'opportunity-details': { title: '機會詳細資料', subtitle: '檢視機會的所有關聯資訊', loaded: true }
 };

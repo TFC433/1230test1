@@ -4,7 +4,6 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth.middleware');
 
 // --- 引入 Controllers ---
-// 我們直接引入 controller 來精細控制，而不是整包引入 externalRoutes
 const externalController = require('../controllers/external.controller');
 const contactController = require('../controllers/contact.controller'); 
 
@@ -22,28 +21,21 @@ const eventRoutes = require('./event.routes');
 const calendarRoutes = require('./calendar.routes');   
 const lineLeadsRoutes = require('./line-leads.routes'); 
 
-// ==========================================
-// 1. 【公開區域】危險性低或必須公開的 API
-// ==========================================
+// ★★★ 【新增】商品路由 ★★★
+const productRoutes = require('./product.routes');
 
-// 登入
+// ==========================================
+// 1. 【公開區域】
+// ==========================================
 router.use('/auth', authRoutes);
-
-// LINE LIFF 相關 (由 Controller 內部檢查 Token，所以這裡路由本身是公開的)
 router.use('/line', lineLeadsRoutes); 
-
-// ★ 修正重點：只開放「縮圖預覽」給外部 (例如讓 LINE 裡看得到圖片)
-// 這樣做不會消耗大量資源，也沒有敏感資料
 router.get('/drive/thumbnail', externalController.getDriveThumbnail);
 
-
 // ==========================================
-// 2. 【保護區域】必須登入才能使用的 API (Token 驗證閘門)
+// 2. 【保護區域】
 // ==========================================
-router.use(authMiddleware.verifyToken); // <--- 驗證閘門
+router.use(authMiddleware.verifyToken); 
 
-// ★ 修正重點：將「AI 生成公司簡介」移到保護區
-// 這樣只有登入的員工才能觸發 Gemini 和 Google Search，防止費用暴增
 router.post('/companies/:companyName/generate-profile', externalController.generateCompanyProfile);
 
 // 掛載其他業務模組
@@ -58,7 +50,11 @@ router.use('/sales-analysis', salesRoutes);
 router.use('/events', eventRoutes);         
 router.use('/calendar', calendarRoutes);   
 
-// 特例處理 (搜尋聯絡人)
+// ★★★ 【掛載 Phase 2 路由】 ★★★
+// 路徑：/api/products
+router.use('/products', productRoutes);
+
+// 特例處理
 router.get('/contact-list', contactController.searchContactList);
 
 // 404 處理

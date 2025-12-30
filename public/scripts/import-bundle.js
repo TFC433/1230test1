@@ -50,7 +50,13 @@ const scripts = [
     "scripts/dashboard/dashboard_widgets.js",
     "scripts/dashboard/dashboard_weekly.js",
     "scripts/dashboard/dashboard_kanban.js",
-    "scripts/dashboard/dashboard.js"
+    "scripts/dashboard/dashboard.js",
+    
+    // ★★★ 【新增】商品模組腳本 ★★★
+    "scripts/products/products.js"
+
+
+
 ];
 
 // 依照順序同步寫入標籤，這與直接寫在 HTML 效果完全一樣

@@ -139,9 +139,9 @@ const LayoutManager = {
         // ★★★ 套用 Admin 專屬樣式 Class ★★★
         adminItem.className = 'nav-item admin-restricted';
         
-        // ★★★ 修正：移除 span，將 class="nav-icon" 直接加在 svg 上，確保吃到 CSS 樣式 ★★★
+        // ★★★ 修正：指向 'products' 頁面，且 SVG 結構正確 ★★★
         adminItem.innerHTML = `
-            <a href="#" class="nav-link" onclick="alert('Phase 2 待實作'); return false;">
+            <a href="#" class="nav-link" onclick="event.preventDefault(); CRM_APP.navigateTo('products');">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>

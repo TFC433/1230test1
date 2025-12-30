@@ -1,5 +1,4 @@
 // public/scripts/core/constants.js
-// 職責：存放系統全域配置、頁面定義與下拉選單對應關係
 
 window.CRM_APP = window.CRM_APP || {};
 
@@ -16,9 +15,11 @@ window.CRM_APP.pageConfig = {
     'weekly-detail': { title: '週間業務詳情', subtitle: '檢視特定週次的業務紀錄', loaded: true },
     'events': { title: '事件紀錄列表', subtitle: '查看所有機會案件的詳細事件報告', loaded: false },
     'company-details': { title: '公司詳細資料', subtitle: '查看公司的完整關聯資訊', loaded: true },
-    'opportunity-details': { title: '機會詳細資料', subtitle: '檢視機會的所有關聯資訊', loaded: true }
+    'opportunity-details': { title: '機會詳細資料', subtitle: '檢視機會的所有關聯資訊', loaded: true },
+    
+    // ★★★ 【新增】商品成本管理頁面 ★★★
+    'products': { title: '商品成本管理', subtitle: '檢視市場商品成本與定價策略 (機密)', loaded: false }
 };
-
 // 2. 下拉選單元素 ID 與 Config Key 的對應
 window.CRM_APP.dropdownMappings = {
     'opportunity-type': '機會種類',

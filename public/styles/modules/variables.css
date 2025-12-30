@@ -1,0 +1,77 @@
+/* views/styles/modules/variables.css */
+:root {
+    /* 色彩 - 暗色主題 (優化後) */
+    --primary-bg: #1e293b; /* 深藍灰 */
+    --secondary-bg: #334155; /* 次級藍灰 */
+    --card-bg: #475569; /* 卡片藍灰 */
+    --glass-bg: rgba(71, 85, 105, 0.5); /* 半透明藍灰 */
+    --text-primary: #f1f5f9; /* 接近白色 */
+    --text-secondary: #cbd5e1; /* 淺灰藍 */
+    --text-muted: #94a3b8; /* 中灰藍 */
+    --text-dark: #1e293b; /* 用於淺色背景上的深色文字 */
+    --accent-blue: #60a5fa; /* 亮藍 */
+    --accent-green: #4ade80; /* 亮綠 */
+    --accent-orange: #fb923c; /* 亮橘 */
+    --accent-purple: #a78bfa; /* 亮紫 */
+    --accent-red: #f87171; /* 亮紅 */
+    --border-color: #475569; /* 邊框藍灰 */
+    --gradient-bg: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+
+    /* 字體大小 (保持不變) */
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 2rem;
+
+    /* 間距 (保持不變) */
+    --spacing-1: 4px;
+    --spacing-2: 8px;
+    --spacing-3: 12px;
+    --spacing-4: 16px;
+    --spacing-5: 20px;
+    --spacing-6: 24px;
+    --spacing-8: 32px;
+    --spacing-10: 40px;
+
+    /* 圓角 (保持不變) */
+    --rounded-sm: 4px;
+    --rounded-md: 8px;
+    --rounded-lg: 12px;
+    --rounded-xl: 16px;
+    --rounded-2xl: 24px;
+    --rounded-full: 9999px;
+
+    /* 陰影 (略微調整) */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.15), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.2), 0 8px 10px -6px rgb(0 0 0 / 0.15);
+}
+
+[data-theme="light"] {
+    /* 色彩 - 亮色主題 (優化後) */
+    --primary-bg: #f8fafc; /* 非常淺的灰色 */
+    --secondary-bg: #ffffff; /* 白色 */
+    --card-bg: #ffffff; /* 白色 */
+    --glass-bg: rgba(255, 255, 255, 0.7); /* 半透明白 */
+    --text-primary: #1e293b; /* 深藍灰 */
+    --text-secondary: #475569; /* 次級藍灰 */
+    --text-muted: #64748b; /* 中藍灰 */
+    --text-dark: #ffffff; /* 用於深色背景上的淺色文字 */
+    --accent-blue: #3b82f6; /* 主藍色 */
+    --accent-green: #16a34a; /* 主綠色 */
+    --accent-orange: #f59e0b; /* 主橘色 */
+    --accent-purple: #8b5cf6; /* 主紫色 */
+    --accent-red: #ef4444; /* 主紅色 */
+    --border-color: #e2e8f0; /* 淺灰色邊框 */
+    --gradient-bg: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
+
+    /* 陰影 (亮色模式陰影較淺) */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+}

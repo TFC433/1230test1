@@ -1,13 +1,11 @@
 // public/scripts/products/products.js
-// 職責：市場商品管理、Chip Wall 排序、批次編輯 (隱藏 ID / 自動生成 ID)
+// 職責：市場商品管理、Chip Wall (全系統排序)、批次編輯 (隱藏 ID / 自動生成 ID)
 
 window.ProductManager = {
     allProducts: [],
     revealedIds: new Set(),
     isEditMode: false,
-    // 用來儲存分類順序的 Key
-    STORAGE_KEY_ORDER: 'crm_product_category_order_v1',
-    categoryOrder: [], // 執行期間的順序快取
+    categoryOrder: [], // 用於快取全系統的分類排序
 
     async init() {
         const container = document.getElementById('page-products');
@@ -23,8 +21,8 @@ window.ProductManager = {
             return;
         }
 
-        // 2. 讀取儲存的排序設定
-        this.loadCategoryOrder();
+        // 2. 先從後端讀取「全系統」排序設定
+        await this.loadCategoryOrder();
 
         // 3. 注入工具列按鈕
         this.injectToolbarControls();
@@ -36,28 +34,54 @@ window.ProductManager = {
         await this.loadData();
     },
 
-    loadCategoryOrder() {
+    // ★ 從後端 API 讀取排序設定
+    async loadCategoryOrder() {
         try {
-            const saved = localStorage.getItem(this.STORAGE_KEY_ORDER);
-            if (saved) {
-                this.categoryOrder = JSON.parse(saved);
+            const res = await authedFetch('/api/products/category-order');
+            if (res.success && Array.isArray(res.order)) {
+                this.categoryOrder = res.order;
             }
         } catch (e) {
-            console.warn('讀取排序設定失敗', e);
+            console.warn('讀取全系統排序設定失敗', e);
         }
     },
 
-    saveCategoryOrder(newOrder) {
-        this.categoryOrder = newOrder;
-        localStorage.setItem(this.STORAGE_KEY_ORDER, JSON.stringify(newOrder));
+    // ★ 儲存排序設定到後端 API
+    async saveCategoryOrder(newOrder) {
+        // UI 顯示儲存中
+        const statusEl = document.getElementById('order-save-status');
+        if(statusEl) statusEl.textContent = '⟳ 儲存排序中...';
+
+        try {
+            const res = await authedFetch('/api/products/category-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order: newOrder })
+            });
+
+            if (res.success) {
+                this.categoryOrder = newOrder;
+                if(statusEl) statusEl.textContent = '✓ 排序已更新 (全系統生效)';
+                // 成功後刷新頁面以應用新順序
+                setTimeout(() => window.location.reload(), 500); 
+            } else {
+                throw new Error(res.error);
+            }
+        } catch (e) {
+            console.error(e);
+            if(statusEl) statusEl.textContent = '✕ 儲存失敗';
+            showNotification('儲存排序失敗: ' + e.message, 'error');
+        }
     },
 
-    // 注入工具列按鈕
     injectToolbarControls() {
         const actionContainer = document.querySelector('#page-products .widget-actions');
+        
         if (actionContainer && !actionContainer.querySelector('.product-edit-tools')) {
             const btnGroup = document.createElement('div');
             btnGroup.className = 'btn-group product-edit-tools';
+            
+            // 強制單行排列樣式
             btnGroup.style.display = 'flex';
             btnGroup.style.alignItems = 'center';
             btnGroup.style.gap = '8px';          
@@ -78,9 +102,11 @@ window.ProductManager = {
                     儲存
                 </button>
             `;
-            
+
             const refreshBtn = actionContainer.querySelector('#btn-refresh-products');
-            if (refreshBtn) btnGroup.appendChild(refreshBtn);
+            if (refreshBtn) {
+                btnGroup.appendChild(refreshBtn);
+            }
             actionContainer.appendChild(btnGroup);
         }
     },
@@ -128,54 +154,62 @@ window.ProductManager = {
 
     toggleEditMode() {
         this.isEditMode = !this.isEditMode;
+        
         const btnEdit = document.getElementById('btn-toggle-edit');
         const btnSave = document.getElementById('btn-save-batch');
         const btnAdd = document.getElementById('btn-add-row');
         const searchInput = document.getElementById('product-search-input');
 
         if (this.isEditMode) {
-            // 進入編輯
+            // === 進入編輯模式 ===
             btnEdit.innerHTML = `❌ 取消`;
             btnEdit.classList.add('danger');
             if(btnSave) btnSave.style.display = 'inline-flex';
             if(btnAdd) btnAdd.style.display = 'inline-flex';
-            if(searchInput) {
-                searchInput.value = ''; searchInput.disabled = true; searchInput.placeholder = '編輯模式下不可搜尋';
+            
+            if (searchInput) {
+                searchInput.value = ''; 
+                searchInput.disabled = true;
+                searchInput.placeholder = '編輯模式下不可搜尋';
             }
         } else {
-            // 離開編輯 (還原)
-            this.loadData();
+            // === 離開編輯模式 ===
+            this.loadData(); // 重新載入以還原
+            
             btnEdit.innerHTML = `✏️ 編輯模式`;
             btnEdit.classList.remove('danger');
             if(btnSave) btnSave.style.display = 'none';
             if(btnAdd) btnAdd.style.display = 'none';
-            if(searchInput) {
-                searchInput.disabled = false; searchInput.placeholder = '搜尋名稱、種類、規格...';
+            
+            if (searchInput) {
+                searchInput.disabled = false;
+                searchInput.placeholder = '搜尋名稱、種類、規格...';
             }
         }
         this.renderTable();
     },
 
-    // 新增時自動產生 ID，不讓使用者輸入
     addNewRow() {
-        const autoId = 'AUTO-' + Date.now().toString().slice(-6); // 簡易自動 ID
+        // 自動產生 ID
+        const autoId = 'AUTO-' + Date.now().toString().slice(-6);
+        
         const newRow = {
-            id: autoId,
+            id: autoId, 
             name: '',
-            category: '未分類', // 預設分類
+            category: '未分類', 
             spec: '',
+            interface: '', // 新增欄位
+            property: '',  // 新增欄位
             cost: '',
             priceMtb: '',
             priceSi: '',
             priceMtu: '',
-            status: '上架',
             _isNew: true 
         };
-        // 加到最前面
+        // 插入到最前面
         this.allProducts.unshift(newRow);
         this.renderTable();
         
-        // 提示
         showNotification('已新增一筆資料 (ID 自動生成)', 'info');
     },
 
@@ -246,7 +280,6 @@ window.ProductManager = {
         const draggableElements = [...container.querySelectorAll('.chip-item:not(.dragging)')];
         return draggableElements.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
-            // 判斷滑鼠是否在元素中心點的左側/上方
             const offset = x - box.left - box.width / 2;
             if (offset < 0 && offset > closest.offset) {
                 return { offset: offset, element: child };
@@ -266,13 +299,11 @@ window.ProductManager = {
         const newJson = JSON.stringify(newOrder);
 
         if (currentJson !== newJson) {
+            // 呼叫 API 儲存
             this.saveCategoryOrder(newOrder);
-            // 直接刷新頁面以應用新順序
-            window.location.reload();
         }
     },
 
-    // ★ 渲染主表格
     renderTable(query = '') {
         const container = document.getElementById('product-groups-container');
         if (!container) return;
@@ -302,7 +333,7 @@ window.ProductManager = {
             groups[cat].push(item);
         });
 
-        // 2. 決定顯示順序 (Merge saved order with new categories)
+        // 2. 決定顯示順序 (以 API 回傳的 categoryOrder 為準)
         const currentCategories = Object.keys(groups);
         let displayOrder = [];
 
@@ -319,7 +350,7 @@ window.ProductManager = {
             }
         });
         
-        // 若完全沒存檔過，就把 "未分類" 排最後，其他自然排序
+        // 若完全沒存檔過，就預設排序 (未分類最後)
         if (this.categoryOrder.length === 0) {
             displayOrder.sort((a, b) => {
                 if (a === '未分類') return 1;
@@ -328,11 +359,10 @@ window.ProductManager = {
             });
         }
 
-        // 初始化 Chip Wall (只在非編輯模式且無搜尋時顯示完整 Wall，或者也可以一直顯示)
+        // 初始化 Chip Wall (編輯模式或搜尋時隱藏)
         if (!this.isEditMode && !query) {
             this.initChipWall(displayOrder, groups);
         } else {
-            // 搜尋或編輯時隱藏 Wall，避免干擾
             const wall = document.getElementById('chip-wall-area');
             if(wall) wall.style.display = 'none';
         }
@@ -343,15 +373,8 @@ window.ProductManager = {
         displayOrder.forEach(category => {
             let items = groups[category];
 
-            // 排序卡片內的商品：先排狀態(上架優先)，再排名稱
-            items.sort((a, b) => {
-                // 狀態權重: 上架(1) > 其他(2)
-                const scoreA = a.status === '上架' ? 1 : 2;
-                const scoreB = b.status === '上架' ? 1 : 2;
-                if (scoreA !== scoreB) return scoreA - scoreB;
-                // 名稱排序
-                return (a.name || '').localeCompare(b.name || '');
-            });
+            // 排序卡片內的商品：僅依「商品名稱」排序 (移除狀態排序)
+            items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
             html += `
                 <div class="category-group-widget" id="group-${category}">
@@ -365,30 +388,31 @@ window.ProductManager = {
                         <table class="data-table product-edit-table">
                             <thead>
                                 <tr>
-                                    <th width="5%">#</th> <th width="20%">商品名稱</th>
+                                    <th width="5%">#</th>
+                                    <th width="20%">商品名稱</th>
                                     <th width="10%">種類</th>
                                     <th width="15%">規格</th>
                                     
-                                    <th width="8%">成本</th>
-                                    <th width="8%">MTB</th>
-                                    <th width="8%">SI</th>
-                                    <th width="8%">MTU</th>
+                                    <th width="10%">介面</th>
+                                    <th width="10%">性質</th>
+
+                                    <th width="7%">成本</th>
+                                    <th width="7%">MTB</th>
+                                    <th width="7%">SI</th>
+                                    <th width="7%">MTU</th>
                                     
-                                    <th width="8%">狀態</th>
-                                    <th width="10%">最後修改</th>
+                                    <th width="8%">最後修改</th>
                                 </tr>
                             </thead>
                             <tbody>
             `;
 
             items.forEach((item, index) => {
-                // 取得原始資料 Index (供 Save 使用)
                 const originalIndex = this.allProducts.indexOf(item);
                 const itemNum = index + 1; // 項次
 
                 if (this.isEditMode) {
                     // === 編輯模式 ===
-                    // ID 欄位改為 Hidden
                     html += `
                         <tr class="edit-row" data-index="${originalIndex}">
                             <td class="text-muted">${itemNum}</td>
@@ -399,17 +423,14 @@ window.ProductManager = {
                             <td><input type="text" name="category" class="form-control dense" value="${item.category || ''}" placeholder="分類"></td>
                             <td><input type="text" name="spec" class="form-control dense" value="${item.spec || ''}"></td>
                             
+                            <td><input type="text" name="interface" class="form-control dense" value="${item.interface || ''}"></td>
+                            <td><input type="text" name="property" class="form-control dense" value="${item.property || ''}"></td>
+
                             <td><input type="number" name="cost" class="form-control dense" value="${item.cost || ''}"></td>
                             <td><input type="number" name="priceMtb" class="form-control dense" value="${item.priceMtb || ''}"></td>
                             <td><input type="number" name="priceSi" class="form-control dense" value="${item.priceSi || ''}"></td>
                             <td><input type="number" name="priceMtu" class="form-control dense" value="${item.priceMtu || ''}"></td>
                             
-                            <td>
-                                <select name="status" class="form-control dense">
-                                    <option value="上架" ${item.status === '上架' ? 'selected' : ''}>上架</option>
-                                    <option value="停售" ${item.status === '停售' ? 'selected' : ''}>停售</option>
-                                </select>
-                            </td>
                             <td class="text-muted" style="font-size:0.8rem">-</td>
                         </tr>
                     `;
@@ -420,8 +441,6 @@ window.ProductManager = {
                     const siHtml = this.renderSensitiveCell(item.id, 'si', item.priceSi);
                     const mtuHtml = this.renderSensitiveCell(item.id, 'mtu', item.priceMtu);
                     
-                    const statusClass = item.status === '上架' ? 'active' : 'inactive';
-                    const statusLabel = item.status || '未定';
                     const lastMod = item.lastUpdateTime ? item.lastUpdateTime.split('T')[0] : '-';
 
                     html += `
@@ -431,12 +450,14 @@ window.ProductManager = {
                             <td><span class="badge-tag badge-category">${item.category || '-'}</span></td>
                             <td style="font-size:0.9rem">${item.spec || '-'}</td>
                             
+                            <td style="font-size:0.9rem">${item.interface || '-'}</td>
+                            <td style="font-size:0.9rem">${item.property || '-'}</td>
+
                             <td>${costHtml}</td>
                             <td>${mtbHtml}</td>
                             <td>${siHtml}</td>
                             <td>${mtuHtml}</td>
                             
-                            <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
                             <td style="font-size:0.8rem; color:#999;">${lastMod}</td>
                         </tr>
                     `;
@@ -449,7 +470,7 @@ window.ProductManager = {
         container.innerHTML = html;
     },
 
-    // 儲存邏輯 (ID 從 hidden field 抓取)
+    // 儲存邏輯
     async saveAll() {
         const rows = document.querySelectorAll('.product-edit-table tbody tr');
         const payload = [];
@@ -458,16 +479,13 @@ window.ProductManager = {
             const inputs = row.querySelectorAll('input, select');
             const obj = {};
             inputs.forEach(input => {
-                // name="id" 的 hidden input 也會被抓到
                 obj[input.name] = input.value.trim();
             });
 
-            // Merge back to original data
+            // 合併原始資料 (包含未顯示的欄位)
             const originalIndex = parseInt(row.dataset.index);
             const originalObj = this.allProducts[originalIndex] || {};
             
-            // 這裡如果 ID 是 AUTO- 開頭，後端可能需要處理成正式 ID，或者就用這個 ID
-            // 您的 ProductWriter 應該能接受任意字串作為 ID
             payload.push({ ...originalObj, ...obj });
         });
 

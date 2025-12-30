@@ -7,42 +7,66 @@ class SystemWriter extends BaseWriter {
         super(sheets);
     }
 
-    /**
-     * 更新使用者密碼
-     * @param {number} rowIndex - 該使用者在 Sheet 中的行號 (1-based)
-     * @param {string} newHash - 加密後的新密碼 Hash
-     */
     async updatePassword(rowIndex, newHash) {
-        // 優先使用權限專用表 ID，若無則使用預設 ID
         const targetSheetId = config.AUTH_SPREADSHEET_ID || config.SPREADSHEET_ID;
-        
-        // 密碼位於 B 欄 (第二欄)
         const range = `使用者名冊!B${rowIndex}`;
-
-        console.log(`🔐 [SystemWriter Debug] 開始執行 updatePassword`);
-        console.log(`   - Row Index: ${rowIndex}`);
-        console.log(`   - Target Range: ${range}`);
-        console.log(`   - Target Sheet ID: ${targetSheetId} (Length: ${targetSheetId ? targetSheetId.length : 0})`);
-
         try {
-            const response = await this.sheets.spreadsheets.values.update({
-                spreadsheetId: targetSheetId,
-                range: range,
-                valueInputOption: 'RAW',
-                resource: {
-                    values: [[newHash]]
-                }
+            await this.sheets.spreadsheets.values.update({
+                spreadsheetId: targetSheetId, range, valueInputOption: 'RAW',
+                resource: { values: [[newHash]] }
             });
-
-            console.log(`✅ [SystemWriter Debug] Google API 回應成功:`, response.data);
             return true;
         } catch (error) {
-            console.error('❌ [SystemWriter Debug] Google API 呼叫失敗:', error.message);
-            if (error.response) {
-                console.error('   - Error Details:', JSON.stringify(error.response.data));
-            }
+            console.error('❌ [SystemWriter] 更新密碼失敗:', error.message);
             throw error;
         }
+    }
+
+    // ★★★ 新增：更新系統偏好設定 (用於存分類順序) ★★★
+    async updateSystemPref(key, value) {
+        const sheetId = config.SPREADSHEET_ID;
+        const sheetName = config.SHEETS.SYSTEM_CONFIG;
+
+        // 1. 先讀取整張表找出 Key 在哪一行
+        const readRes = await this.sheets.spreadsheets.values.get({
+            spreadsheetId: sheetId,
+            range: `${sheetName}!A:B` // 假設 A欄=Type, B欄=Item
+        });
+        
+        const rows = readRes.data.values || [];
+        let targetRowIndex = -1;
+
+        // 尋找 Type='SystemPref' 且 Item=key 的行
+        for (let i = 0; i < rows.length; i++) {
+            if (rows[i][0] === 'SystemPref' && rows[i][1] === key) {
+                targetRowIndex = i + 1; // 1-based index
+                break;
+            }
+        }
+
+        // 2. 準備寫入資料: [Type, Item, Order, Enabled, Note(存放Value)]
+        // 對應 SYSTEM_CONFIG_FIELDS: 類型(A), 項目(B), 順序(C), 啟用(D), 備註(E)
+        const rowData = ['SystemPref', key, '0', 'TRUE', value];
+
+        if (targetRowIndex !== -1) {
+            // 更新現有行 (只更新 Note 欄位 E)
+            await this.sheets.spreadsheets.values.update({
+                spreadsheetId: sheetId,
+                range: `${sheetName}!E${targetRowIndex}`,
+                valueInputOption: 'RAW',
+                resource: { values: [[value]] }
+            });
+        } else {
+            // 新增一行
+            await this.sheets.spreadsheets.values.append({
+                spreadsheetId: sheetId,
+                range: `${sheetName}!A:E`,
+                valueInputOption: 'RAW',
+                insertDataOption: 'INSERT_ROWS',
+                resource: { values: [rowData] }
+            });
+        }
+        return true;
     }
 }
 

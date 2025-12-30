@@ -7,7 +7,9 @@
         border-radius: var(--rounded-lg);
         padding: 1.5rem;
         margin-bottom: 1.5rem;
-        display: flex; align-items: flex-start; gap: 1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
         box-shadow: 0 2px 4px rgba(239, 68, 68, 0.05);
     }
     .confidential-icon-wrapper {
@@ -54,16 +56,30 @@
     /* --- 分類卡片群組 --- */
     .category-group-widget {
         margin-bottom: 2rem;
-        border: 1px solid #e5e7eb; border-radius: var(--rounded-lg);
-        background: white; overflow: hidden;
+        border: 1px solid #e5e7eb;
+        border-radius: var(--rounded-lg);
+        background: white;
+        overflow: hidden;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        scroll-margin-top: 100px; /* 讓捲動定位時不會被 Header 蓋住 */
+        scroll-margin-top: 100px;
     }
+    
     .category-header {
-        background-color: #f8fafc; padding: 1rem 1.5rem;
+        background-color: #f8fafc; 
+        padding: 1rem 1.5rem;
         border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
-    .category-title { font-size: 1.1rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 0.5rem; }
+    .category-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
 
     /* --- 敏感數值 --- */
     .sensitive-value {
@@ -76,22 +92,25 @@
     .sensitive-value.masked::after { content: '🔒'; font-size: 0.7rem; opacity: 0.5; }
     .sensitive-value.revealed { background-color: #fef2f2; color: #b91c1c; font-weight: 600; letter-spacing: normal; }
 
-    /* --- 標籤樣式 (Category & Status) --- */
+    /* --- 標籤樣式 --- */
     .badge-tag {
         display: inline-block; padding: 0.25rem 0.6rem; border-radius: 4px;
         font-size: 0.85rem; font-weight: 500;
     }
-    .badge-category { background-color: #e0f2fe; color: #0369a1; } /* 淺藍 */
-    
-    .status-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
-    .status-badge.active { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; } /* 綠 */
-    .status-badge.inactive { background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; } /* 灰 */
+    .badge-category { background-color: #e0f2fe; color: #0369a1; }
 
     /* 控制面板 */
     .control-panel-card {
-        background: white; padding: 1rem 1.5rem;
-        border-radius: var(--rounded-lg); box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;
+        background: white;
+        padding: 1rem 1.5rem;
+        border-radius: var(--rounded-lg);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
         border: 1px solid #e5e7eb;
     }
 </style>
@@ -101,11 +120,15 @@
     <div class="grid-col-12">
         <div class="confidential-card">
             <div class="confidential-icon-wrapper">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
             </div>
             <div class="confidential-content">
                 <h3>機密成本資料 (Confidential Cost Data)</h3>
-                <p>此區域包含敏感商業數據，僅限授權管理員查閱。請勿在公共場合展示。</p>
+                <p>此區域包含敏感商業數據（成本、底價、利潤結構），僅限授權管理員查閱。<br>
+                請勿在公共場合展示、截圖或透過未加密管道傳輸此頁面內容。</p>
             </div>
         </div>
     </div>
@@ -113,12 +136,15 @@
     <div class="grid-col-12">
         <div class="control-panel-card">
             <h2 class="widget-title" style="margin:0; font-size:1.25rem;">市場商品管理</h2>
+            
             <div class="widget-actions" style="display: flex; gap: 12px; align-items: center;">
                 <div class="search-box-wrapper">
                     <input type="text" id="product-search-input" class="search-box" placeholder="搜尋名稱、種類、規格...">
                 </div>
                 <button class="action-btn secondary" id="btn-refresh-products" title="重新同步 Google Sheet">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
                     同步資料
                 </button>
             </div>
@@ -128,8 +154,8 @@
     <div class="grid-col-12" id="chip-wall-area" style="display: none;">
         <div class="chip-wall-container">
             <div class="chip-wall-title">
-                <span>商品分類導覽 (拖曳標籤可調整順序)</span>
-                <span style="font-size:0.75rem; color:#94a3b8;">* 順序將自動儲存</span>
+                <span>商品分類導覽 (拖曳標籤可全域調整順序)</span>
+                <span id="order-save-status" style="font-size:0.75rem; color:#94a3b8;"></span>
             </div>
             <div class="chip-list" id="category-chip-list">
                 </div>

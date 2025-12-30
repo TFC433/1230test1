@@ -229,7 +229,9 @@ function getCurrentUser() {
 
 function logout() {
     localStorage.removeItem('crm-token');
+    localStorage.removeItem('crmToken');
     localStorage.removeItem('crmCurrentUserName');
+    localStorage.removeItem('crmUserRole');
     window.location.href = '/';
 }
 

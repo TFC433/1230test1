@@ -37,6 +37,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (response.ok && result.success) {
                 console.log('✅ [Login] Token 有效，自動跳轉...');
                 
+                // 確保雙重 Token 一致性 (修復無限重導問題)
+                if (!localStorage.getItem('crm-token')) {
+                    localStorage.setItem('crm-token', cachedToken);
+                }
+                if (!localStorage.getItem('crmToken')) {
+                    localStorage.setItem('crmToken', cachedToken);
+                }
+
                 if (messageEl) {
                     messageEl.textContent = '歡迎回來，正在進入系統...';
                     messageEl.classList.add('text-success');

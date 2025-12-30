@@ -53,6 +53,17 @@ exports.login = async (req, res) => {
     }
 };
 
+// 【新增】驗證 Session 有效性 (前端自動登入檢查用)
+exports.verifySession = (req, res) => {
+    // 能進入此函式代表已通過 verifyToken 中介軟體，Token 為有效
+    // req.user 已經包含了 payload 資訊 (username, role 等)
+    res.json({ 
+        success: true, 
+        message: 'Token Valid',
+        user: req.user 
+    });
+};
+
 // 驗證舊密碼 (給前端 On-Blur 使用)
 exports.verifyPassword = async (req, res) => {
     try {

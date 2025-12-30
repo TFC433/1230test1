@@ -1,6 +1,6 @@
 // public/scripts/core/login.js
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const loginForm = document.getElementById('login-form');
     // 【修正】這裡改回正確的 ID 'error-message'
     const messageEl = document.getElementById('error-message'); 
@@ -8,11 +8,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!loginForm) return;
 
-    // 清除舊的 Session (避免權限混亂)
+    // ==========================================
+    // 1. 自動登入檢查 (Auto-Login Check)
+    // ==========================================
+    const cachedToken = localStorage.getItem('crmToken') || localStorage.getItem('crm-token');
+
+    if (cachedToken) {
+        console.log('🔄 [Login] 偵測到 Token，正在驗證有效性...');
+        
+        // UI 回饋：避免使用者以為卡住
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = '驗證身份中...';
+        }
+
+        try {
+            // 呼叫後端驗證 API
+            const response = await fetch('/api/auth/verify', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${cachedToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                console.log('✅ [Login] Token 有效，自動跳轉...');
+                
+                if (messageEl) {
+                    messageEl.textContent = '歡迎回來，正在進入系統...';
+                    messageEl.classList.add('text-success');
+                }
+
+                // 驗證成功：直接跳轉，不需要清除 Storage
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 500); // 稍微延遲讓視覺更平滑
+                return; // ★ 重要：中止後續程式碼執行
+            }
+
+        } catch (error) {
+            console.warn('⚠ [Login] Token 驗證失敗或網路錯誤:', error);
+            // 驗證失敗將繼續往下執行清除邏輯
+        }
+    }
+
+    // ==========================================
+    // 2. 清除舊 Session (驗證失敗或無 Token 時執行)
+    // ==========================================
+    console.log('ℹ [Login] 無有效 Session，重置登入狀態');
     localStorage.removeItem('crmToken');
+    localStorage.removeItem('crm-token');
     localStorage.removeItem('crmCurrentUserName');
     localStorage.removeItem('crmUserRole');
 
+    // 恢復按鈕狀態
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '登入系統';
+    }
+
+    // ==========================================
+    // 3. 處理一般登入表單提交
+    // ==========================================
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -51,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 2. 儲存使用者資訊
                 localStorage.setItem('crmCurrentUserName', result.name);
                 
-                // ★★★ 3. 儲存角色權限 (這是我們這次新增的重點) ★★★
+                // ★★★ 3. 儲存角色權限 ★★★
                 localStorage.setItem('crmUserRole', result.role || 'sales');
 
                 if (messageEl) {

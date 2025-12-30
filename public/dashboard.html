@@ -22,7 +22,7 @@
 <body>
     <script>
         // 檢查登入狀態，若未登入則導向登入頁
-        if (!localStorage.getItem('crm-token')) {
+        if (!localStorage.getItem('crm-token') && !localStorage.getItem('crmToken')) {
             window.location.href = '/login.html';
         }
     </script>

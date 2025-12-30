@@ -92,7 +92,9 @@ async function executeFetch(url, options, attempts) {
             if (!isRedirectingToLogin) {
                 isRedirectingToLogin = true;
                 localStorage.removeItem('crm-token');
+                localStorage.removeItem('crmToken');
                 localStorage.removeItem('crmCurrentUserName');
+                localStorage.removeItem('crmUserRole');
                 showNotification('您的登入已過期或無效，將跳轉至登入頁面。', 'error', 3000);
                 setTimeout(() => { window.location.href = '/login.html'; }, 2000);
             }

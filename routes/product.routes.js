@@ -6,7 +6,8 @@ const authMiddleware = require('../middleware/auth.middleware');
 // 注意：roleMiddleware 可能需要依照您的專案路徑引入，這裡假設您有做全域或個別檢查
 
 // 所有 /api/products 路由都需要登入
-router.use(authMiddleware);
+// 修正：authMiddleware 匯出的是物件，需調用其中的 verifyToken 方法
+router.use(authMiddleware.verifyToken);
 
 // 讀取列表
 router.get('/', productController.getProducts);

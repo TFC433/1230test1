@@ -1,20 +1,13 @@
 // public/scripts/dashboard/dashboard_ui.js
 
 const DashboardUI = {
-    /**
-     * 顯示指定 Widget 的 Loading 狀態
-     * @param {string} widgetId - Widget 的 DOM ID (e.g., 'kanban-widget')
-     * @param {string} message - 顯示訊息
-     */
     showLoading(widgetId, message = '載入中...') {
         const widget = document.getElementById(widgetId);
         if (!widget) return;
         
-        // 嘗試找到內部的 .loading 容器，若無則建立
         let loadingEl = widget.querySelector('.loading');
         if (!loadingEl) {
             const content = widget.querySelector('.widget-content') || widget;
-            // 檢查是否已經有 .loading 結構 (避免重複)
             if (!content.querySelector('.loading')) {
                 loadingEl = document.createElement('div');
                 loadingEl.className = 'loading';
@@ -32,42 +25,24 @@ const DashboardUI = {
         }
     },
 
-    /**
-     * 隱藏指定 Widget 的 Loading 狀態
-     * @param {string} widgetId 
-     */
     hideLoading(widgetId) {
         const widget = document.getElementById(widgetId);
         if (!widget) return;
-        
         const loadingEl = widget.querySelector('.loading');
-        if (loadingEl) {
-            loadingEl.classList.remove('show');
-        }
+        if (loadingEl) loadingEl.classList.remove('show');
     },
 
-    /**
-     * 全域的初始化 Loading (通常用於第一次進入 Dashboard)
-     */
     showGlobalLoading(message = '正在同步儀表板資料...') {
-        if (typeof showLoading === 'function') {
-            showLoading(message); // 使用 utils.js 的全域 loading
-        }
+        if (typeof showLoading === 'function') showLoading(message);
     },
 
     hideGlobalLoading() {
-        if (typeof hideLoading === 'function') {
-            hideLoading();
-        }
+        if (typeof hideLoading === 'function') hideLoading();
     },
 
-    /**
-     * 顯示錯誤訊息在指定 Widget
-     */
     showError(widgetId, errorMessage) {
         const widget = document.getElementById(widgetId);
         if (!widget) return;
-        
         const content = widget.querySelector('.widget-content') || widget;
         content.innerHTML = `<div class="alert alert-error">${errorMessage}</div>`;
     }
@@ -76,26 +51,23 @@ const DashboardUI = {
 window.DashboardUI = DashboardUI;
 
 
-// ★★★ 全新：UserProfile 管理器 (包含修改密碼邏輯) ★★★
+// ★★★ UserProfile 管理器 (讀取 LayoutManager 的單一真理) ★★★
 const UserProfile = {
     modalId: 'user-profile-modal',
     
-    // 初始化
     init() {
         const modal = document.getElementById(this.modalId);
         if (!modal) return;
 
-        // 綁定背景點擊 (防誤觸搖晃)
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 const card = modal.querySelector('.profile-card');
                 card.classList.remove('modal-shake');
-                void card.offsetWidth; // Trigger reflow
+                void card.offsetWidth; 
                 card.classList.add('modal-shake');
             }
         });
 
-        // 綁定表單輸入事件 (即時驗證)
         this.bindEvents();
     },
 
@@ -108,48 +80,37 @@ const UserProfile = {
         
         const nameEl = document.getElementById('profile-name-large');
         const avatarEl = document.getElementById('profile-avatar');
-        
-        // 取得新的 Tag 元素
         const roleTagEl = document.getElementById('profile-role-tag');
-        const permTagEl = document.getElementById('profile-permission-tag');
         
         // 2. 更新基本資訊
         if (nameEl) nameEl.textContent = storedName;
         if (avatarEl) avatarEl.textContent = (storedName[0] || 'U').toUpperCase();
         
-        // ★★★ 3. 角色與權限 Tag 設定 ★★★
-        const ROLE_MAP = {
-            'admin': {
-                title: '主管 (Admin)',
-                permission: '系統管理員'
-            },
-            'sales': {
-                title: '業務 (Sales)',
-                permission: '一般權限'
-            }
+        // ★★★ 3. 角色 (從全域定義讀取) ★★★
+        
+        // 確保定義是最新的 (如果 Config 剛載入)
+        if (window.CRM_APP.refreshRoleDisplay) {
+             window.CRM_APP.refreshRoleDisplay(); 
+        }
+
+        // 取得定義表 (由 layout-manager.js 產生)
+        const defs = window.CRM_APP.ROLE_DEFINITIONS || {};
+        
+        // 查找當前角色的設定
+        const roleConfig = defs[storedRole] || defs['sales'] || { 
+            title: storedRole, 
+            color: '#f3f4f6',
+            textColor: '#374151'
         };
 
-        const roleConfig = ROLE_MAP[storedRole] || ROLE_MAP['sales'];
-
-        // 更新 Tag 文字與顏色
+        // 更新 Tag 文字與樣式
         if (roleTagEl) {
-            roleTagEl.textContent = roleConfig.title;
-            
-            // 根據角色給予不同顏色
-            if (storedRole === 'admin') {
-                // 紅色系 (代表管理員)
-                roleTagEl.style.backgroundColor = '#fee2e2';
-                roleTagEl.style.color = '#991b1b';
-            } else {
-                // 藍色系 (代表一般業務)
-                roleTagEl.style.backgroundColor = '#dbeafe';
-                roleTagEl.style.color = '#1e40af';
-            }
+            roleTagEl.textContent = roleConfig.title; // 顯示: 管理員 / 業務
+            roleTagEl.style.backgroundColor = roleConfig.color; 
+            roleTagEl.style.color = roleConfig.textColor;
         }
 
-        if (permTagEl) {
-            permTagEl.textContent = roleConfig.permission;
-        }
+        // 權限標籤已在 HTML 中移除，程式碼亦不需要再處理它
         
         // 重置狀態
         this.switchView('profile');
@@ -158,13 +119,11 @@ const UserProfile = {
         modal.classList.add('show');
     },
 
-    // ★★★ 關閉視窗方法 ★★★
     close() {
         const modal = document.getElementById(this.modalId);
         if (modal) modal.classList.remove('show');
     },
 
-    // 切換視圖 (Profile <-> Password)
     switchView(viewName) {
         const views = document.getElementById('profile-views');
         if (viewName === 'password') {
@@ -178,7 +137,6 @@ const UserProfile = {
         const form = document.getElementById('change-password-form');
         if (form) form.reset();
         
-        // 清除所有驗證狀態
         ['cp-old', 'cp-new', 'cp-confirm'].forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
@@ -205,57 +163,42 @@ const UserProfile = {
 
         if (!form) return;
 
-        // 1. 舊密碼：On Blur (移開時) 驗證
         oldInput.addEventListener('blur', async () => {
             const val = oldInput.value;
             if (!val) return;
-            
-            // 呼叫後端驗證 API
             const isValid = await this.verifyOldPassword(val);
             this.setValidationState(oldInput, isValid, isValid ? '' : '舊密碼錯誤');
             this.checkFormValidity();
         });
         
-        // 修正：當使用者重新輸入舊密碼時，移除錯誤狀態
         oldInput.addEventListener('input', () => {
              oldInput.classList.remove('is-invalid');
              document.getElementById('fb-old').textContent = '';
              this.checkFormValidity();
         });
 
-        // 2. 新密碼：輸入時即時檢查強度
         newInput.addEventListener('input', () => {
             const val = newInput.value;
             const strength = this.checkStrength(val);
             this.updateStrengthMeter(strength);
-            
-            const isValid = strength >= 1; // 至少要有點強度
+            const isValid = strength >= 1;
             this.setValidationState(newInput, isValid, isValid ? '' : '密碼長度至少 6 碼');
-            
-            // 連動檢查確認密碼
             if (confirmInput.value) confirmInput.dispatchEvent(new Event('input'));
-            
             this.checkFormValidity();
         });
 
-        // 3. 確認密碼：輸入時即時比對
         confirmInput.addEventListener('input', () => {
             const val = confirmInput.value;
             const origin = newInput.value;
-            
             if (!val) {
                 confirmInput.classList.remove('is-valid', 'is-invalid');
                 return;
             }
-
             const isMatch = val === origin;
             this.setValidationState(confirmInput, isMatch, isMatch ? '' : '密碼不一致');
-            
-            // 決定按鈕是否可按 (全部通過才可按)
             this.checkFormValidity();
         });
 
-        // 4. 送出表單
         form.addEventListener('submit', (e) => this.handleSubmit(e));
     },
 
@@ -294,7 +237,6 @@ const UserProfile = {
         const oldValid = document.getElementById('cp-old').classList.contains('is-valid');
         const newValid = document.getElementById('cp-new').classList.contains('is-valid');
         const confirmValid = document.getElementById('cp-confirm').classList.contains('is-valid');
-        
         document.getElementById('btn-save-password').disabled = !(oldValid && newValid && confirmValid);
     },
 
@@ -340,7 +282,7 @@ const UserProfile = {
 
             if (result.success) {
                 alert('✅ 修改成功！請使用新密碼重新登入');
-                logout(); // 呼叫全域登出函式
+                logout(); 
             } else {
                 alert('❌ 修改失敗: ' + (result.message || '未知錯誤'));
                 btn.disabled = false;
@@ -354,10 +296,8 @@ const UserProfile = {
     }
 };
 
-// 讓全域可呼叫
 window.UserProfile = UserProfile;
 
-// 初始化
 document.addEventListener('DOMContentLoaded', () => {
     UserProfile.init();
 });

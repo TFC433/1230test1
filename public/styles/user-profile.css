@@ -1,5 +1,42 @@
 /* public/styles/user-profile.css */
 
+/* --- Header User Button Styling (膠囊按鈕樣式) --- */
+#user-display {
+    height: 40px; /* 與鄰近 .action-btn 高度一致 */
+    background-color: #fff; /* 與鄰近按鈕一致的白色背景 */
+    border: 1px solid #e2e8f0; /* 與鄰近按鈕一致的邊框 */
+    border-radius: 9999px; /* 膠囊形狀 (Pill) */
+    padding: 0 16px; /* 左右留白 */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #4a5568;
+    font-weight: 500;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+#user-display:hover {
+    background-color: #f7fafc; /* Hover 變色 */
+    border-color: #cbd5e0;
+    color: #2d3748;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 修正內部 Icon 大小 */
+#user-display svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.5;
+    color: #a0aec0;
+}
+
+#user-display:hover svg {
+    color: #718096;
+}
+
 /* --- Modal 基礎設定 --- */
 .profile-modal {
     display: none;

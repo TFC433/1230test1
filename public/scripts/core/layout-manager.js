@@ -1,27 +1,76 @@
 // public/scripts/core/layout-manager.js
-// 職責：管理側邊欄 (Sidebar) 狀態、使用者資訊、權限顯示與下拉選單更新
+// 職責：管理側邊欄 (Sidebar)、使用者資訊顯示、以及「角色定義」的單一真理來源
 
 window.CRM_APP = window.CRM_APP || {};
 
 const LayoutManager = {
     isPinned: true,
-    currentUserRole: 'sales', // 預設權限
+    currentUserRole: 'sales', // 預設
+
+    // 1. 定義預設的角色設定 (預設為中文，確保斷線時也顯示正常)
+    defaultRoleDefs: {
+        'admin': { title: '管理員', permission: 'System Admin', color: '#fee2e2', textColor: '#991b1b' },
+        'sales': { title: '業務', permission: 'General User', color: '#dbeafe', textColor: '#1e40af' }
+    },
 
     init() {
         console.log('🏗️ [Layout] 初始化 UI 佈局...');
         this.loadUserRole();
+        
+        // 嘗試建立角色定義 (如果 Config 已經在記憶體中)
+        this.buildRoleDefinitions();
+        
         this.setupSidebar();
         this.displayUser();
-        this.injectAdminFeatures(); // ★ 新增：注入管理員功能
+        this.injectAdminFeatures();
     },
 
     /**
-     * 從 LocalStorage 載入使用者角色
+     * ★★★ 核心方法：建立角色定義表 ★★★
+     * 從系統設定 (Google Sheet) 讀取 UserRole，若無則使用預設值
      */
+    buildRoleDefinitions() {
+        const config = window.CRM_APP.systemConfig || {};
+        const sheetRoles = config['UserRole']; // 對應 Sheet 的「設定類型」= UserRole
+
+        // 準備一個容器
+        const finalDefs = { ...this.defaultRoleDefs };
+
+        if (Array.isArray(sheetRoles) && sheetRoles.length > 0) {
+            sheetRoles.forEach(item => {
+                // item.value = 'admin' (設定項目)
+                // item.note = '管理員' (備註/顯示名稱)
+                // item.color = '#fee2e2' (樣式規格/背景色)
+                
+                if (item.value) {
+                    finalDefs[item.value] = {
+                        title: item.note || item.value,
+                        // 我們保留 permission 屬性在資料結構中，以備不時之需，但介面上不會顯示
+                        permission: item.value3 || '一般權限',
+                        color: item.color || '#f3f4f6',
+                        textColor: item.color ? this.darkenColor(item.color, 60) : '#1f2937' 
+                    };
+                }
+            });
+        }
+
+        // 將「真理」發布到全域變數
+        window.CRM_APP.ROLE_DEFINITIONS = finalDefs;
+        return finalDefs;
+    },
+
+    /**
+     * 輔助：簡單的顏色變深 (為了文字可讀性)
+     */
+    darkenColor(hex, percent) {
+        if (hex.includes('fee2e2')) return '#991b1b'; // 紅底配深紅
+        if (hex.includes('dbeafe')) return '#1e40af'; // 藍底配深藍
+        return '#374151'; // 預設深灰
+    },
+
     loadUserRole() {
         this.currentUserRole = localStorage.getItem('crmUserRole') || 'sales';
         window.CRM_APP.currentUserRole = this.currentUserRole;
-        console.log(`👤 [Layout] 當前使用者角色: ${this.currentUserRole}`);
     },
 
     setupSidebar() {
@@ -65,39 +114,31 @@ const LayoutManager = {
     },
 
     displayUser() {
+        // 確保定義是最新的
+        this.buildRoleDefinitions(); 
+
         const el = document.getElementById('user-display-name');
         const name = localStorage.getItem('crmCurrentUserName') || '使用者';
         
-        // 顯示名稱與角色標記 (如果是 Admin)
-        const roleLabel = this.currentUserRole === 'admin' ? ' (Admin)' : '';
+        // 這裡依照您的需求：只顯示名字，不顯示任何職稱
+        if (el) el.textContent = `${name}`; 
         
-        if (el) el.textContent = `👤 ${name}${roleLabel}`;
         window.CRM_APP.currentUser = name;
     },
 
-    /**
-     * ★★★ 新增：注入管理員專用選單 ★★★
-     * 只有 admin 角色才會執行此邏輯
-     */
     injectAdminFeatures() {
         if (this.currentUserRole !== 'admin') return;
 
         const sidebarNav = document.querySelector('.sidebar-nav ul') || document.querySelector('.sidebar-menu');
         if (!sidebarNav) return;
-
-        // 檢查是否已經存在 (避免重複插入)
         if (document.getElementById('nav-cost-analysis')) return;
 
-        console.log('🛡️ [Layout] 偵測到管理員權限，啟用進階選單...');
-
-        // 建立新的選單項目
         const adminItem = document.createElement('li');
         adminItem.id = 'nav-cost-analysis';
-        adminItem.className = 'nav-item admin-only'; // 加上 class 方便管理
+        adminItem.className = 'nav-item admin-only';
         
-        // 這裡設定點擊後的行為，暫時先 log，下一階段我們會換成 router.navigate
         adminItem.innerHTML = `
-            <a href="#" class="nav-link" onclick="alert('Phase 2 待實作：跳轉至商品成本分析頁面'); return false;">
+            <a href="#" class="nav-link" onclick="alert('Phase 2 待實作'); return false;">
                 <span class="nav-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="1" x2="12" y2="23"></line>
@@ -108,14 +149,17 @@ const LayoutManager = {
             </a>
         `;
 
-        // 將新按鈕插入到「系統設定」之前，或者列表的最下方
         const systemConfigItem = Array.from(sidebarNav.children).find(li => li.textContent.includes('系統設定'));
-        
         if (systemConfigItem) {
             sidebarNav.insertBefore(adminItem, systemConfigItem);
         } else {
             sidebarNav.appendChild(adminItem);
         }
+    },
+
+    refreshRoleDisplay() {
+        this.buildRoleDefinitions();
+        this.displayUser();
     },
 
     updateDropdowns() {
@@ -128,7 +172,6 @@ const LayoutManager = {
             if (select && Array.isArray(config[key])) {
                 const currentVal = select.value;
                 const firstOption = select.querySelector('option:first-child')?.outerHTML || '<option value="">請選擇...</option>';
-                
                 select.innerHTML = firstOption;
                 config[key]
                     .sort((a, b) => (a.order || 99) - (b.order || 99))
@@ -138,7 +181,6 @@ const LayoutManager = {
                         opt.textContent = item.note || item.value;
                         select.appendChild(opt);
                     });
-                
                 if (currentVal) select.value = currentVal;
             }
         });
@@ -146,3 +188,4 @@ const LayoutManager = {
 };
 
 window.CRM_APP.updateAllDropdowns = LayoutManager.updateDropdowns.bind(LayoutManager);
+window.CRM_APP.refreshRoleDisplay = LayoutManager.refreshRoleDisplay.bind(LayoutManager);

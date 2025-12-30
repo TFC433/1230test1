@@ -115,9 +115,9 @@
                         <span class="btn-text">資料已更新，請點此重整</span>
                     </button>
 
-                    <div class="user-info" id="user-display" onclick="UserProfile.open()" style="cursor: pointer; padding: 5px 10px; border-radius: 20px; transition: background 0.2s;" title="查看個人檔案">
+                    <div class="user-info" id="user-display" onclick="UserProfile.open()" title="查看個人檔案">
                         <span id="user-display-name">User</span>
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" style="margin-left:5px; vertical-align: middle;"><path d="M6 9l6 6 6-6"/></svg>
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M6 9l6 6 6-6"/></svg>
                     </div>
 
                     <button class="action-btn danger" onclick="logout()" title="登出">
@@ -291,16 +291,11 @@
                     <div class="profile-header">
                         <div class="avatar-large" id="profile-avatar">U</div>
                         
-                        <div style="font-size: 0.8rem; color: #888; margin-bottom: 4px;">使用者名稱</div>
+                        <h2 id="profile-name-large" style="margin:0 0 10px 0;">User</h2>
                         
-                        <h2 id="profile-name-large" style="margin:0 0 16px 0;">User</h2>
-                        
-                        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: center; margin-bottom: 20px;">
                             <span id="profile-role-tag" style="padding: 5px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; background: #e0e0e0; color: #333;">
                                 角色載入中...
-                            </span>
-                            <span id="profile-permission-tag" style="padding: 5px 14px; border-radius: 20px; font-size: 0.85rem; background: #f3f4f6; color: #4b5563;">
-                                權限載入中...
                             </span>
                         </div>
                     </div>

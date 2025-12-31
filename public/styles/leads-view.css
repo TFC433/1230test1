@@ -201,6 +201,55 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+/* Locked / Disabled Card Styles */
+.lead-card.locked,
+.lead-card.disabled {
+    background-color: var(--bg-locked);
+    border-color: var(--border-locked);
+    box-shadow: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.lead-card.locked .lead-name,
+.lead-card.disabled .lead-name,
+.lead-card.locked .lead-company,
+.lead-card.disabled .lead-company {
+    color: var(--text-locked);
+}
+
+.lead-card.locked:hover,
+.lead-card.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.lead-card.locked::after,
+.lead-card.disabled::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(0,0,0,0.02),
+        rgba(0,0,0,0.02) 10px,
+        transparent 10px,
+        transparent 20px
+    );
+    pointer-events: none;
+}
+
+[data-theme="light"] .lead-card.locked::after,
+[data-theme="light"] .lead-card.disabled::after {
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(0,0,0,0.03),
+        rgba(0,0,0,0.03) 10px,
+        transparent 10px,
+        transparent 20px
+    );
+}
+
 /* 頂部區域：姓名(左) + 擁有者(右) */
 .card-top-row {
     display: flex;

@@ -49,6 +49,11 @@
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.2);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.2);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.2);
+
+    /* Locked State Colors (Dark) */
+    --bg-locked: #1e293b; /* Slate 800 */
+    --text-locked: #94a3b8; /* Slate 400 */
+    --border-locked: #334155; /* Slate 700 */
 }
 
 [data-theme="light"] {
@@ -74,4 +79,9 @@
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.06);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.06);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.06);
+
+    /* Locked State Colors (Light) */
+    --bg-locked: #f1f5f9; /* Slate 100 */
+    --text-locked: #64748b; /* Slate 500 */
+    --border-locked: #cbd5e1; /* Slate 300 */
 }

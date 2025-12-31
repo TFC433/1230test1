@@ -3,12 +3,12 @@ const { google } = require('googleapis');
 const config = require('../config');
 const AuthService = require('./auth-service');
 const ProductReader = require('../data/product-reader');
-const ProductWriter = require('../data/product-writer'); // ★ 新增引入
+const ProductWriter = require('../data/product-writer');
 
 class ProductService {
     constructor() {
         this.reader = null;
-        this.writer = null; // ★ 新增
+        this.writer = null;
     }
 
     async _getReader() {
@@ -26,7 +26,6 @@ class ProductService {
         return this.reader;
     }
 
-    // ★ 新增：初始化 Writer
     async _getWriter() {
         if (!this.writer) {
             try {
@@ -62,7 +61,10 @@ class ProductService {
                 );
             }
 
-            products.sort((a, b) => (b.id || '').localeCompare(a.id || ''));
+            // 【修改】預設排序由 ID 遞增 (Ascending: A->Z, 1->9)
+            // 使用 numeric: true 確保 P10 會排在 P2 後面，而不是 P1 後面
+            products.sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
+
             return products;
         } catch (error) {
             console.error('[ProductService] getProducts 執行錯誤:', error);
@@ -70,7 +72,6 @@ class ProductService {
         }
     }
 
-    // ★ 新增：批次儲存方法
     async saveAll(products, user) {
         try {
             console.log(`[ProductService] 開始批次儲存 ${products.length} 筆資料...`);

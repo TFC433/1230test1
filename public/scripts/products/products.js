@@ -6,6 +6,7 @@ window.ProductManager = {
     categoryOrder: [], 
     isEditMode: false,
     hasBoundGlobalEvents: false,
+    detailModal: null, // 用來存放 Modal 實例
 
     async init() {
         const container = document.getElementById('page-products');
@@ -17,6 +18,13 @@ window.ProductManager = {
         } catch (err) {
             console.error('[Products] 載入失敗', err);
             return;
+        }
+
+        // 初始化 Modal 實例 (依賴 product-detail-modal.js)
+        if (typeof ProductDetailModal !== 'undefined') {
+            this.detailModal = new ProductDetailModal();
+        } else {
+            console.error('ProductDetailModal class not found! 請確認是否已載入 product-detail-modal.js');
         }
 
         await this.loadCategoryOrder();
@@ -75,8 +83,8 @@ window.ProductManager = {
 
         btnGroup.innerHTML = `
             <button id="btn-add-row" class="action-btn secondary" style="display:none; white-space:nowrap;">＋ 新增</button>
-            <button id="btn-toggle-edit" class="action-btn secondary" style="white-space:nowrap;">✏️ 編輯</button>
-            <button id="btn-save-batch" class="action-btn primary" style="display:none; white-space:nowrap;">💾 儲存</button>
+            <button id="btn-toggle-edit" class="action-btn secondary" style="white-space:nowrap;">✏️ 列表編輯</button>
+            <button id="btn-save-batch" class="action-btn primary" style="display:none; white-space:nowrap;">💾 儲存列表</button>
             <button id="btn-refresh-products" class="action-btn secondary" title="同步" style="white-space:nowrap;">⟳</button>
         `;
         panelActions.appendChild(btnGroup);
@@ -97,21 +105,28 @@ window.ProductManager = {
         document.addEventListener('click', (e) => {
             const target = e.target.closest('button');
             if (!target) return;
-            if (!document.getElementById('page-products').contains(target) && !target.closest('.modal')) return;
+            // 排除 Modal 內部按鈕 (由 ProductDetailModal 自己處理)
+            if (target.closest('.modal')) return;
+            if (!document.getElementById('page-products').contains(target)) return;
 
             if (target.id === 'btn-refresh-products') this.forceRefresh();
             if (target.id === 'btn-toggle-edit') this.setEditMode(!this.isEditMode);
             if (target.id === 'btn-save-batch') this.saveAll();
             if (target.id === 'btn-add-row') this.addNewRow();
             
-            if (target.classList.contains('close-modal') || target.classList.contains('close-modal-btn')) {
-                document.getElementById('product-detail-modal').style.display = 'none';
+            // 處理舊的 modal 關閉按鈕 (以防萬一，或列表上的其他按鈕)
+            if (target.classList.contains('close-modal')) {
+                if(this.detailModal) this.detailModal.close();
             }
         });
 
+        // 點擊背景關閉 Modal
         window.addEventListener('click', (e) => {
             const modal = document.getElementById('product-detail-modal');
-            if (e.target === modal) modal.style.display = 'none';
+            if (e.target === modal) {
+                if(this.detailModal) this.detailModal.close();
+                else modal.style.display = 'none';
+            }
         });
 
         this.hasBoundGlobalEvents = true;
@@ -231,6 +246,7 @@ window.ProductManager = {
                     const costDisplay = isRevealed ? fmtMoney(item.cost) : '$ $$$';
                     const costClass = isRevealed ? 'sensitive-value revealed' : 'sensitive-value masked';
 
+                    // 點擊整列開啟 Modal (Open Detail Modal)
                     html += `
                         <tr onclick="ProductManager.openDetailModal('${item.id}')">
                             <td class="text-muted font-mono">${itemNum}</td>
@@ -343,50 +359,49 @@ window.ProductManager = {
         }
     },
 
+    // [修改] 呼叫外部 Modal
     openDetailModal(id) {
+        if (!this.detailModal) return;
+
         const product = this.allProducts.find(p => p.id === id);
         if (!product) return;
-        const modal = document.getElementById('product-detail-modal');
-        const content = document.getElementById('modal-product-content');
-        const costKey = `${product.id}_cost`;
-        const isRevealed = this.revealedCostIds.has(costKey);
-        const fmtMoney = (v) => v ? `$ ${Number(v).toLocaleString()}` : '-';
-        const costVal = isRevealed ? fmtMoney(product.cost) : '$ $$$ (點擊解鎖)';
 
-        content.innerHTML = `
-            <div class="detail-item detail-full">
-                <span class="detail-label">商品名稱</span>
-                <span class="detail-value" style="font-size:1.2rem;">${product.name}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">分類</span>
-                <span class="detail-value">${product.category}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">ID</span>
-                <span class="detail-value font-mono">${product.id}</span>
-            </div>
-            <div class="detail-item detail-full">
-                <span class="detail-label">規格</span>
-                <div style="background:#f8fafc; padding:0.5rem; border-radius:4px; font-size:0.95rem;">${product.spec||'-'}</div>
-            </div>
-            <div class="detail-item"><span class="detail-label">介面</span><span class="detail-value">${product.interface||'-'}</span></div>
-            <div class="detail-item"><span class="detail-label">性質</span><span class="detail-value">${product.property||'-'}</span></div>
-            
-            <div class="detail-item detail-full">
-                <div class="price-box">
-                    <div class="price-row"><span class="detail-label">成本</span><span class="detail-value" style="color:#dc2626;">${costVal}</span></div>
-                    <div class="price-row"><span class="detail-label">MTB</span><span class="detail-value">${fmtMoney(product.priceMtb)}</span></div>
-                    <div class="price-row"><span class="detail-label">SI</span><span class="detail-value">${fmtMoney(product.priceSi)}</span></div>
-                    <div class="price-row"><span class="detail-label">MTU</span><span class="detail-value">${fmtMoney(product.priceMtu)}</span></div>
-                </div>
-            </div>
-            <div class="detail-item detail-full">
-                <span class="detail-label">備註</span>
-                <span class="detail-value text-muted">${product.description||'-'}</span>
-            </div>
-        `;
-        modal.style.display = 'flex';
+        // 收集所有分類 (包含目前排序設定與現有產品的分類)
+        const existingCategories = Array.from(new Set(this.allProducts.map(p => p.category).filter(Boolean)));
+        const allCats = Array.from(new Set([...this.categoryOrder, ...existingCategories]));
+
+        this.detailModal.open(
+            product, 
+            allCats,
+            async (updatedData) => {
+                await this.handleSingleProductSave(updatedData);
+            }
+        );
+    },
+
+    async handleSingleProductSave(updatedData) {
+        // 使用 batch API 更新單筆
+        try {
+            const res = await authedFetch('/api/products/batch', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({products: [updatedData]})
+            });
+
+            if(res.success) {
+                // 更新本地資料
+                const idx = this.allProducts.findIndex(p => p.id === updatedData.id);
+                if (idx !== -1) {
+                    this.allProducts[idx] = { ...this.allProducts[idx], ...updatedData };
+                }
+                this.renderTable(); 
+            } else {
+                throw new Error(res.error || 'API Error');
+            }
+        } catch (e) {
+            console.error(e);
+            throw e; // 拋出讓 Modal 顯示錯誤
+        }
     },
 
     toggleCost(id) {
@@ -410,7 +425,7 @@ window.ProductManager = {
             btnAdd.style.display = 'inline-block';
             this.renderTable(); 
         } else {
-            btnEdit.textContent = '✏️ 編輯';
+            btnEdit.textContent = '✏️ 列表編輯';
             btnEdit.classList.remove('danger');
             btnSave.style.display = 'none';
             btnAdd.style.display = 'none';

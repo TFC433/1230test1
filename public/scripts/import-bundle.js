@@ -53,7 +53,8 @@ const scripts = [
     "scripts/dashboard/dashboard.js",
     
     // ★★★ 【新增】商品模組腳本 ★★★
-    "scripts/products/products.js"
+    "scripts/products/products.js",
+    "scripts/products/product-detail-modal.js"
 
 
 

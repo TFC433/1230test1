@@ -244,7 +244,11 @@ function renderCompaniesTable(companies) {
             .comp-list-table { width: 100%; border-collapse: collapse; min-width: 900px; }
             .comp-list-table th { padding: 12px 16px; text-align: left; background: var(--glass-bg); color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
             .comp-list-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; font-size: 0.95rem; color: var(--text-main); }
-            .comp-list-table tr:hover { background-color: rgba(0,0,0,0.02); }
+            .comp-list-table tr:not(.locked):hover { background-color: var(--glass-bg); }
+
+            .comp-list-table tr.locked { background-color: var(--bg-locked); color: var(--text-locked); }
+            .comp-list-table tr.locked td { color: var(--text-locked); }
+
             .comp-type-chip { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.8rem; color: white; white-space: nowrap; font-weight: 500; }
             .comp-status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; color: white; white-space: nowrap; }
             .comp-opp-count { display: inline-block; padding: 2px 8px; border-radius: 6px; background: #f3f4f6; color: #1f2937; font-weight: 700; font-size: 0.85rem; }

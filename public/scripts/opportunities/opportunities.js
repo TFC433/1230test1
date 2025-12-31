@@ -426,8 +426,11 @@ function renderOpportunitiesTable(opportunities) {
             .opp-list-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
             .opp-list-table th { padding: 12px 16px; text-align: left; background: var(--glass-bg); color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
             .opp-list-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; font-size: 0.95rem; color: var(--text-main); }
-            .opp-list-table tr:hover { background-color: rgba(0,0,0,0.02); }
+            .opp-list-table tr:not(.locked):hover { background-color: var(--glass-bg); }
             
+            .opp-list-table tr.locked { background-color: var(--bg-locked); color: var(--text-locked); }
+            .opp-list-table tr.locked td { color: var(--text-locked); }
+
             .opp-type-chip { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.8rem; color: white; white-space: nowrap; font-weight: 500; }
             .opp-sales-chip { display: inline-block; padding: 3px 12px; border-radius: 12px; font-size: 0.8rem; color: white; white-space: nowrap; font-weight: 500; }
             .opp-channel-chip { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #e5e7eb; background-color: #f9fafb; color: #374151; white-space: nowrap; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }

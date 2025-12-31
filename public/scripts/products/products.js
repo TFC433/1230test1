@@ -27,7 +27,7 @@ window.ProductManager = {
     // --- 資料載入 ---
     async loadData() {
         const container = document.getElementById('product-groups-container');
-        // 只有第一次載入時才顯示大 Loading，更新時使用無感刷新或 Overlay
+        // 只有在沒有資料時才顯示大 Loading，避免編輯切換時閃爍
         if (this.allProducts.length === 0) {
             container.innerHTML = `<div class="loading show"><div class="spinner"></div><p>載入商品資料中...</p></div>`;
         }
@@ -61,10 +61,6 @@ window.ProductManager = {
             });
             this.categoryOrder = newOrder;
             if(statusEl) statusEl.textContent = '✓ 已儲存';
-            // 這裡不需要重繪整個表格，因為只是 Chip Wall 順序變了，
-            // 但如果使用者真的要看表格變動，通常是下次整理時，
-            // 為了效能，我們可以只在 Chip Wall 顯示成功，不強制 renderTable。
-            // 當然，如果您希望表格立刻跟著跑，也可以呼叫 this.renderTable();
             this.renderTable(); 
         } catch (e) {
             if(statusEl) statusEl.textContent = '✕ 失敗';
@@ -106,7 +102,8 @@ window.ProductManager = {
             if (!document.getElementById('page-products').contains(target) && !target.closest('.modal')) return;
 
             if (target.id === 'btn-refresh-products') this.forceRefresh();
-            if (target.id === 'btn-toggle-edit') this.toggleEditMode();
+            // ★ 改用 setEditMode 來切換
+            if (target.id === 'btn-toggle-edit') this.setEditMode(!this.isEditMode);
             if (target.id === 'btn-save-batch') this.saveAll();
             if (target.id === 'btn-add-row') this.addNewRow();
             
@@ -137,13 +134,11 @@ window.ProductManager = {
                 (p.category && p.category.toLowerCase().includes(q)) ||
                 (p.spec && p.spec.toLowerCase().includes(q))
             );
-            // 搜尋時隱藏 Chip Wall 以免混亂
             if (wallArea) wallArea.style.display = 'none';
         } else {
-            // ★ 無論是否編輯模式，都顯示 Chip Wall
             if (wallArea) wallArea.style.display = 'block';
             
-            // ★ 根據模式切換 Disabled 狀態
+            // 同步 Chip Wall 狀態
             const wallContainer = document.querySelector('.chip-wall-container');
             if (wallContainer) {
                 if (this.isEditMode) wallContainer.classList.add('disabled');
@@ -156,20 +151,18 @@ window.ProductManager = {
             return;
         }
 
-        // 分組
         const groups = {};
         data.forEach(item => {
+            if(!item) return; // 安全檢查
             const cat = item.category ? item.category.trim() : '未分類';
             if (!groups[cat]) groups[cat] = [];
             groups[cat].push(item);
         });
 
-        // 排序
         let displayCats = [];
         this.categoryOrder.forEach(c => { if (groups[c]) displayCats.push(c); });
         Object.keys(groups).forEach(c => { if (!displayCats.includes(c)) displayCats.push(c); });
 
-        // 新增項目置頂
         const newGroup = displayCats.find(cat => groups[cat].some(i => i._isNew));
         if (newGroup) {
             displayCats = displayCats.filter(c => c !== newGroup);
@@ -181,8 +174,6 @@ window.ProductManager = {
         }
 
         let html = '';
-        
-        // 欄位定義 (固定寬度)
         const thWithResizer = (text, width) => `
             <th style="width: ${width};">
                 ${text}
@@ -277,7 +268,6 @@ window.ProductManager = {
         }
     },
 
-    // ★ 修正：完全獨立的欄位調整 (移除 querySelectorAll allTargetThs)
     enableColumnResizing() {
         const resizers = document.querySelectorAll('.resizer');
         resizers.forEach(resizer => {
@@ -291,11 +281,8 @@ window.ProductManager = {
                 const onMouseMove = (e) => {
                     const currentX = e.pageX;
                     const newWidth = startWidth + (currentX - startX);
-                    if (newWidth > 30) {
-                        th.style.width = `${newWidth}px`; // 只動自己
-                    }
+                    if (newWidth > 30) th.style.width = `${newWidth}px`;
                 };
-
                 const onMouseUp = () => {
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
@@ -420,29 +407,35 @@ window.ProductManager = {
         this.renderTable();
     },
 
-    // ★ 修正：編輯切換邏輯
-    toggleEditMode() {
-        this.isEditMode = !this.isEditMode;
+    // ★ 關鍵修正：統一管理編輯狀態切換
+    setEditMode(active, skipLoad = false) {
+        this.isEditMode = active;
         
         const btnEdit = document.getElementById('btn-toggle-edit');
         const btnSave = document.getElementById('btn-save-batch');
         const btnAdd = document.getElementById('btn-add-row');
 
         if (this.isEditMode) {
-            // --- 進入編輯 ---
+            // 進入編輯模式
             btnEdit.textContent = '❌ 取消';
             btnEdit.classList.add('danger');
             btnSave.style.display = 'inline-block';
             btnAdd.style.display = 'inline-block';
             this.renderTable(); 
         } else {
-            // --- 取消編輯 (還原資料) ---
+            // 離開編輯模式
             btnEdit.textContent = '✏️ 編輯';
             btnEdit.classList.remove('danger');
             btnSave.style.display = 'none';
             btnAdd.style.display = 'none';
-            // 重新抓資料以復原 (避免編輯到一半的資料殘留)
-            this.loadData();
+            
+            if (skipLoad) {
+                // 如果是存檔後自動離開，不需要重抓資料
+                this.renderTable();
+            } else {
+                // 如果是按取消，重抓資料以復原
+                this.loadData();
+            }
         }
     },
 
@@ -452,7 +445,6 @@ window.ProductManager = {
         this.renderTable();
     },
 
-    // ★ 修正：獨立的存檔流程 (避免迴圈)
     async saveAll() {
         const rows = document.querySelectorAll('.edit-row');
         const payload = [];
@@ -474,7 +466,7 @@ window.ProductManager = {
         if(overlay) overlay.classList.add('active');
 
         try {
-            // 2. 寫入
+            // 2. 執行儲存
             const res = await authedFetch('/api/products/batch', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -482,33 +474,25 @@ window.ProductManager = {
             });
 
             if(res.success) {
-                // 3. 讀取新資料
+                // 3. 儲存成功，抓取最新資料
                 const refreshRes = await authedFetch('/api/products');
                 if(refreshRes.success) {
                     this.allProducts = refreshRes.data || [];
                 }
 
-                // 4. 切換狀態 (不呼叫 loadData)
-                this.isEditMode = false;
+                // 4. ★ 關鍵修正：呼叫 setEditMode 來統一處理離開編輯模式的 UI
+                // 傳入 true (skipLoad)，因為我們剛剛已經手動更新了 this.allProducts
+                this.setEditMode(false, true);
                 
-                // 5. 更新 UI
-                const btnEdit = document.getElementById('btn-toggle-edit');
-                const btnSave = document.getElementById('btn-save-batch');
-                const btnAdd = document.getElementById('btn-add-row');
-                
-                btnEdit.textContent = '✏️ 編輯';
-                btnEdit.classList.remove('danger');
-                btnSave.style.display = 'none';
-                btnAdd.style.display = 'none';
-
-                // 6. 渲染
-                this.renderTable();
-                
-            } else throw new Error(res.error);
+                // 提示成功 (可選)
+                // alert('儲存成功'); 
+            } else {
+                throw new Error(res.error);
+            }
         } catch(e) {
-            alert(e.message);
+            alert('儲存失敗: ' + e.message);
         } finally {
-            // 7. 解鎖畫面
+            // 5. 解鎖畫面
             if(overlay) overlay.classList.remove('active');
         }
     },

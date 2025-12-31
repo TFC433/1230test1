@@ -5,6 +5,7 @@ window.ProductManager = {
     revealedCostIds: new Set(),
     categoryOrder: [], 
     isEditMode: false,
+    hasBoundGlobalEvents: false,
 
     async init() {
         const container = document.getElementById('page-products');
@@ -24,14 +25,11 @@ window.ProductManager = {
         await this.loadData();
     },
 
-    // --- 資料載入 ---
     async loadData() {
         const container = document.getElementById('product-groups-container');
-        // 只有在沒有資料時才顯示大 Loading，避免編輯切換時閃爍
         if (this.allProducts.length === 0) {
             container.innerHTML = `<div class="loading show"><div class="spinner"></div><p>載入商品資料中...</p></div>`;
         }
-
         try {
             const res = await authedFetch('/api/products');
             if (!res.success) throw new Error(res.error);
@@ -42,7 +40,6 @@ window.ProductManager = {
         }
     },
 
-    // --- 排序設定 ---
     async loadCategoryOrder() {
         try {
             const res = await authedFetch('/api/products/category-order');
@@ -67,7 +64,6 @@ window.ProductManager = {
         }
     },
 
-    // --- Toolbar ---
     injectToolbarControls() {
         const panelActions = document.querySelector('.panel-actions');
         if (!panelActions || panelActions.querySelector('.product-actions-group')) return;
@@ -96,13 +92,14 @@ window.ProductManager = {
             });
         }
 
+        if (this.hasBoundGlobalEvents) return;
+
         document.addEventListener('click', (e) => {
             const target = e.target.closest('button');
             if (!target) return;
             if (!document.getElementById('page-products').contains(target) && !target.closest('.modal')) return;
 
             if (target.id === 'btn-refresh-products') this.forceRefresh();
-            // ★ 改用 setEditMode 來切換
             if (target.id === 'btn-toggle-edit') this.setEditMode(!this.isEditMode);
             if (target.id === 'btn-save-batch') this.saveAll();
             if (target.id === 'btn-add-row') this.addNewRow();
@@ -116,9 +113,10 @@ window.ProductManager = {
             const modal = document.getElementById('product-detail-modal');
             if (e.target === modal) modal.style.display = 'none';
         });
+
+        this.hasBoundGlobalEvents = true;
     },
 
-    // --- 核心渲染邏輯 ---
     renderTable(query = '') {
         const container = document.getElementById('product-groups-container');
         const wallArea = document.getElementById('chip-wall-area');
@@ -126,7 +124,6 @@ window.ProductManager = {
 
         let data = this.allProducts;
         
-        // 搜尋
         if (query && !this.isEditMode) {
             const q = query.toLowerCase();
             data = data.filter(p => 
@@ -137,8 +134,6 @@ window.ProductManager = {
             if (wallArea) wallArea.style.display = 'none';
         } else {
             if (wallArea) wallArea.style.display = 'block';
-            
-            // 同步 Chip Wall 狀態
             const wallContainer = document.querySelector('.chip-wall-container');
             if (wallContainer) {
                 if (this.isEditMode) wallContainer.classList.add('disabled');
@@ -153,7 +148,7 @@ window.ProductManager = {
 
         const groups = {};
         data.forEach(item => {
-            if(!item) return; // 安全檢查
+            if(!item) return; 
             const cat = item.category ? item.category.trim() : '未分類';
             if (!groups[cat]) groups[cat] = [];
             groups[cat].push(item);
@@ -200,9 +195,7 @@ window.ProductManager = {
                             <tr>
                                 ${thWithResizer('#', '50px')}
                                 ${thWithResizer('商品名稱', '220px')}
-                                ${thWithResizer('規格', '300px')}
-                                ${thWithResizer('介面', '100px')}
-                                ${thWithResizer('性質', '100px')}
+                                ${thWithResizer('規格', '320px')}
                                 ${thWithResizer('成本', '110px')}
                                 ${thWithResizer('MTB', '110px')}
                                 ${thWithResizer('SI', '110px')}
@@ -226,8 +219,6 @@ window.ProductManager = {
                             
                             <td><input type="text" name="name" class="form-control seamless" value="${item.name||''}" placeholder="名稱"></td>
                             <td><input type="text" name="spec" class="form-control seamless" value="${item.spec||''}" placeholder="規格"></td>
-                            <td><input type="text" name="interface" class="form-control seamless" value="${item.interface||''}"></td>
-                            <td><input type="text" name="property" class="form-control seamless" value="${item.property||''}"></td>
                             <td><input type="number" name="cost" class="form-control seamless" value="${item.cost||''}" placeholder="$"></td>
                             <td><input type="number" name="priceMtb" class="form-control seamless" value="${item.priceMtb||''}" placeholder="$"></td>
                             <td><input type="number" name="priceSi" class="form-control seamless" value="${item.priceSi ||''}" placeholder="$"></td>
@@ -244,17 +235,15 @@ window.ProductManager = {
                         <tr onclick="ProductManager.openDetailModal('${item.id}')">
                             <td class="text-muted font-mono">${itemNum}</td>
                             <td title="${item.name}">${item.name}</td>
-                            <td title="${item.spec||''}">${item.spec||'-'}</td>
-                            <td>${item.interface||'-'}</td>
-                            <td>${item.property||'-'}</td>
+                            <td title="${item.spec||''}"><span class="tag-pill tag-spec">${item.spec||'-'}</span></td>
                             
                             <td onclick="event.stopPropagation(); ProductManager.toggleCost('${item.id}')">
                                 <span class="${costClass}">${costDisplay}</span>
                             </td>
                             
-                            <td class="font-mono" style="text-align:right;">${fmtMoney(item.priceMtb)}</td>
-                            <td class="font-mono" style="text-align:right;">${fmtMoney(item.priceSi)}</td>
-                            <td class="font-mono" style="text-align:right;">${fmtMoney(item.priceMtu)}</td>
+                            <td><span class="tag-pill tag-price">${fmtMoney(item.priceMtb)}</span></td>
+                            <td><span class="tag-pill tag-price">${fmtMoney(item.priceSi)}</span></td>
+                            <td><span class="tag-pill tag-price">${fmtMoney(item.priceMtu)}</span></td>
                         </tr>
                     `;
                 }
@@ -407,7 +396,6 @@ window.ProductManager = {
         this.renderTable();
     },
 
-    // ★ 關鍵修正：統一管理編輯狀態切換
     setEditMode(active, skipLoad = false) {
         this.isEditMode = active;
         
@@ -416,24 +404,20 @@ window.ProductManager = {
         const btnAdd = document.getElementById('btn-add-row');
 
         if (this.isEditMode) {
-            // 進入編輯模式
             btnEdit.textContent = '❌ 取消';
             btnEdit.classList.add('danger');
             btnSave.style.display = 'inline-block';
             btnAdd.style.display = 'inline-block';
             this.renderTable(); 
         } else {
-            // 離開編輯模式
             btnEdit.textContent = '✏️ 編輯';
             btnEdit.classList.remove('danger');
             btnSave.style.display = 'none';
             btnAdd.style.display = 'none';
             
             if (skipLoad) {
-                // 如果是存檔後自動離開，不需要重抓資料
                 this.renderTable();
             } else {
-                // 如果是按取消，重抓資料以復原
                 this.loadData();
             }
         }
@@ -461,12 +445,10 @@ window.ProductManager = {
         if(!payload.length) return;
         if(!confirm(`儲存 ${payload.length} 筆資料?`)) return;
 
-        // 1. 鎖定畫面
         const overlay = document.getElementById('global-loading-overlay');
         if(overlay) overlay.classList.add('active');
 
         try {
-            // 2. 執行儲存
             const res = await authedFetch('/api/products/batch', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -474,25 +456,17 @@ window.ProductManager = {
             });
 
             if(res.success) {
-                // 3. 儲存成功，抓取最新資料
                 const refreshRes = await authedFetch('/api/products');
                 if(refreshRes.success) {
                     this.allProducts = refreshRes.data || [];
                 }
-
-                // 4. ★ 關鍵修正：呼叫 setEditMode 來統一處理離開編輯模式的 UI
-                // 傳入 true (skipLoad)，因為我們剛剛已經手動更新了 this.allProducts
                 this.setEditMode(false, true);
-                
-                // 提示成功 (可選)
-                // alert('儲存成功'); 
             } else {
                 throw new Error(res.error);
             }
         } catch(e) {
             alert('儲存失敗: ' + e.message);
         } finally {
-            // 5. 解鎖畫面
             if(overlay) overlay.classList.remove('active');
         }
     },

@@ -338,7 +338,7 @@ function _injectEventListStyles() {
     const style = document.createElement('style');
     style.id = styleId;
     style.innerHTML = `
-        .event-list-container { width: 100%; overflow-x: auto; background: #fff; min-height: 200px; }
+            .event-list-container { width: 100%; overflow-x: auto; background: var(--card-bg, #fff); min-height: 200px; }
         .event-list-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         
         .event-list-table th { 

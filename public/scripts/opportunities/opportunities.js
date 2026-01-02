@@ -422,7 +422,7 @@ function renderOpportunitiesTable(opportunities) {
         const style = document.createElement('style');
         style.id = styleId;
         style.innerHTML = `
-            .opp-list-container { width: 100%; overflow-x: auto; background: #fff; }
+            .opp-list-container { width: 100%; overflow-x: auto; background: var(--card-bg, #fff); }
             .opp-list-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
             .opp-list-table th { padding: 12px 16px; text-align: left; background: var(--glass-bg); color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
             .opp-list-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; font-size: 0.95rem; color: var(--text-main); }

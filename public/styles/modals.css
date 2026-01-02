@@ -183,6 +183,25 @@
 .data-table tr:hover { background: var(--glass-bg); }
 .data-table tr:last-child td { border-bottom: none; }
 
+/* ==================== 表單輸入框樣式 (含 Product Modal) ==================== */
+.modal-form-control {
+    width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border-color);
+    border-radius: 6px; font-size: 1rem; color: var(--text-primary); transition: all 0.2s; background: var(--secondary-bg);
+}
+.modal-form-control:focus {
+    outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.modal-form-control:disabled:not(.cost-input-original),
+.modal-form-control[readonly]:not(.cost-input-original) {
+    background-color: var(--bg-locked);
+    border: 1px solid var(--border-color);
+    color: var(--text-locked);
+    font-weight: 500;
+    cursor: default;
+    opacity: 1;
+}
+.modal-form-control:disabled::placeholder { color: transparent; }
+
 /* ==================== 通知樣式 ==================== */
 .alert {
     padding: var(--spacing-4) var(--spacing-5);

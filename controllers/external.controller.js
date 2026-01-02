@@ -7,10 +7,10 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const MODEL_CONFIG = {
-    primary: "gemini-2.5-flash",
+// 建議改用 lite 為主，因為免費額度通常較高
+    primary: "gemini-2.5-flash-lite", 
     fallbacks: [
-        "gemini-2.5-flash-lite", 
-        "gemini-2.0-flash",
+        "gemini-2.5-flash", // 把標準版當作備援
         "gemini-2.0-flash-lite"
     ]
 };

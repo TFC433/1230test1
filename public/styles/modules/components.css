@@ -258,9 +258,31 @@
     font-weight: 500; 
 }
 
-.data-table tr:hover { 
+.data-table tr:not(.locked):hover { 
     background: var(--glass-bg); 
 }
+
+/* Locked Row Styles */
+.data-table tr.locked,
+.data-table tr.disabled {
+    background-color: var(--bg-locked);
+    color: var(--text-locked);
+    cursor: not-allowed;
+}
+
+.data-table tr.locked td,
+.data-table tr.disabled td {
+    color: var(--text-locked);
+}
+
+.data-table tr.locked button,
+.data-table tr.disabled button,
+.data-table tr.locked a,
+.data-table tr.disabled a {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
 
 /* 【新增】讓帶有品牌色的表格列顯示特殊樣式 */
 .data-table tr[style*="--card-brand-color"] {

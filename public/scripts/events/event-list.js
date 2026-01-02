@@ -338,7 +338,7 @@ function _injectEventListStyles() {
     const style = document.createElement('style');
     style.id = styleId;
     style.innerHTML = `
-        .event-list-container { width: 100%; overflow-x: auto; background: #fff; min-height: 200px; }
+            .event-list-container { width: 100%; overflow-x: auto; background: var(--card-bg, #fff); min-height: 200px; }
         .event-list-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         
         .event-list-table th { 
@@ -360,7 +360,10 @@ function _injectEventListStyles() {
             color: var(--text-main); 
         }
         
-        .event-list-table tr:hover { background-color: rgba(0,0,0,0.02); }
+        .event-list-table tr:not(.locked):hover { background-color: var(--glass-bg); }
+        
+        .event-list-table tr.locked { background-color: var(--bg-locked); color: var(--text-locked); }
+        .event-list-table tr.locked td { color: var(--text-locked); }
 
         /* 欄位寬度與樣式 */
         .col-idx { width: 60px; text-align: center !important; color: var(--text-muted); font-weight: 600; }

@@ -36,7 +36,37 @@
         margin-bottom: 1.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         transition: opacity 0.3s, filter 0.3s;
     }
-    .chip-wall-container.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(100%); }
+    .chip-wall-container.disabled {
+        opacity: 0.8;
+        pointer-events: none;
+        background-color: var(--bg-locked, #f1f5f9);
+        position: relative;
+        overflow: hidden;
+    }
+    .chip-wall-container.disabled::after {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: repeating-linear-gradient(
+            45deg,
+            rgba(0,0,0,0.02),
+            rgba(0,0,0,0.02) 10px,
+            transparent 10px,
+            transparent 20px
+        );
+        pointer-events: none;
+        z-index: 10;
+    }
+    [data-theme="light"] .chip-wall-container.disabled::after {
+        background: repeating-linear-gradient(
+            45deg,
+            rgba(0,0,0,0.03),
+            rgba(0,0,0,0.03) 10px,
+            transparent 10px,
+            transparent 20px
+        );
+    }
+
     .chip-wall-title {
         font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 0.75rem;
         display: flex; justify-content: space-between; align-items: center;
@@ -86,7 +116,10 @@
     .resizer:hover, .resizer.resizing { background: rgba(59, 130, 246, 0.5); }
 
     .product-table tbody tr { cursor: pointer; transition: background 0.1s; }
-    .product-table tbody tr:hover { background-color: #f8fafc; }
+    .product-table tbody tr:not(.locked):hover { background-color: var(--glass-bg, #f8fafc); }
+
+    .product-table tr.locked { background-color: var(--bg-locked); color: var(--text-locked); }
+    .product-table tr.locked td { color: var(--text-locked); }
 
     /* Tag 樣式 */
     .tag-pill {
